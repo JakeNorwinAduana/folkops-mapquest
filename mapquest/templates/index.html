@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FolkOps Route Planner</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+</head>
+
+<body>
+
+    <!-- Header -->
+    <header class="header">
+
+        <div class="container header-content">
+
+            <div>
+                <p class="brand">FOLKOPS</p>
+
+                <h1>Transport Route Planner</h1>
+
+                <p class="subtitle">
+                    Route planning and transport cost estimation
+                </p>
+            </div>
+
+            <div class="status-badge">
+                MAPQUEST API
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <main class="container">
+
+        <!-- Route Input -->
+        <section class="card">
+
+            <div class="section-heading">
+
+                <div>
+                    <h2>Plan a Route</h2>
+
+                    <p>
+                        Enter your route and vehicle information
+                        to calculate transportation requirements.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <form method="POST">
+
+                <div class="form-grid">
+
+                    <div class="form-group">
+
+                        <label for="origin">
+                            Origin
+                        </label>
+
+                        <input
+                            type="text"
+                            id="origin"
+                            name="origin"
+                            placeholder="e.g. Baguio City"
+                            value="{{ origin }}"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="destination">
+                            Destination
+                        </label>
+
+                        <input
+                            type="text"
+                            id="destination"
+                            name="destination"
+                            placeholder="e.g. Balintawak, Quezon City"
+                            value="{{ destination }}"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="fuel_efficiency">
+                            Fuel Efficiency
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                type="number"
+                                id="fuel_efficiency"
+                                name="fuel_efficiency"
+                                placeholder="10"
+                                step="0.01"
+                                min="0.01"
+                                value="{{ fuel_efficiency }}"
+                                required
+                            >
+
+                            <span>km/L</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="fuel_price">
+                            Fuel Price
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                type="number"
+                                id="fuel_price"
+                                name="fuel_price"
+                                placeholder="95"
+                                step="0.01"
+                                min="0.01"
+                                value="{{ fuel_price }}"
+                                required
+                            >
+
+                            <span>PHP/L</span>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="cargo_weight">
+                            Cargo Weight
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                type="number"
+                                id="cargo_weight"
+                                name="cargo_weight"
+                                placeholder="e.g. 5"
+                                step="0.01"
+                                min="0.01"
+                                value="{{ cargo_weight }}"
+                                required
+                            >
+
+                            <span>tons</span>
+
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="trip_cost">
+                            Estimated Total Trip Cost
+                        </label>
+
+                        <div class="input-with-unit">
+
+                            <input
+                                type="number"
+                                id="trip_cost"
+                                name="trip_cost"
+                                placeholder="e.g. 20000"
+                                step="100"
+                                min="1"
+                                value="{{ trip_cost }}"
+                                required
+                            >
+
+                            <span>PHP</span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <button
+                    type="submit"
+                    class="calculate-button"
+                >
+                    Calculate Route
+                </button>
+
+            </form>
+
+        </section>
+
+
+        <!-- Error -->
+        {% if error %}
+
+        <section class="alert">
+
+            <div class="alert-icon">
+                !
+            </div>
+
+            <div>
+                <strong>Unable to calculate route</strong>
+
+                <p>{{ error }}</p>
+            </div>
+
+        </section>
+
+        {% endif %}
+
+
+        <!-- Results -->
+        {% if route %}
+
+        <section>
+
+            <div class="results-header">
+
+                <div>
+
+                    <p class="eyebrow">
+                        ROUTE RESULTS
+                    </p>
+
+                    <h2>
+                        {{ origin }} → {{ destination }}
+                    </h2>
+
+                </div>
+
+                <div class="success-badge">
+                    Route Found
+                </div>
+
+            </div>
+
+
+            <!-- Metrics -->
+            <div class="summary-grid">
+
+                <div class="metric-card">
+
+                    <span class="metric-label">
+                        Travel Time
+                    </span>
+
+                    <strong class="metric-value">
+                        {{ route.time }}
+                    </strong>
+
+                </div>
+
+
+                <div class="metric-card">
+
+                    <span class="metric-label">
+                        Distance
+                    </span>
+
+                    <strong class="metric-value">
+                        {{ "%.2f"|format(route.kilometers) }}
+                        <small>km</small>
+                    </strong>
+
+                    <span class="metric-secondary">
+                        {{ "%.2f"|format(route.miles) }} miles
+                    </span>
+
+                </div>
+
+
+                <div class="metric-card">
+
+                    <span class="metric-label">
+                        Estimated Fuel
+                    </span>
+
+                    <strong class="metric-value">
+                        {{ "%.2f"|format(route.fuel_needed) }}
+                        <small>L</small>
+                    </strong>
+
+                </div>
+
+
+                <div class="metric-card cost-card">
+
+                    <span class="metric-label">
+                        Estimated Fuel Cost
+                    </span>
+
+                    <strong class="metric-value">
+                        PHP {{ "%.2f"|format(route.fuel_cost) }}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- Fuel Information -->
+            <section class="card">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            TRANSPORT COST
+                        </p>
+
+                        <h2>Fuel Estimate</h2>
+
+                    </div>
+
+                </div>
+
+
+                <div class="fuel-grid">
+
+                    <div class="fuel-item">
+
+                        <span>
+                            Route Distance
+                        </span>
+
+                        <strong>
+                            {{ "%.2f"|format(route.kilometers) }} km
+                        </strong>
+
+                    </div>
+
+
+                    <div class="fuel-item">
+
+                        <span>
+                            Vehicle Efficiency
+                        </span>
+
+                        <strong>
+                            {{ fuel_efficiency }} km/L
+                        </strong>
+
+                    </div>
+
+
+                    <div class="fuel-item">
+
+                        <span>
+                            Fuel Price
+                        </span>
+
+                        <strong>
+                            PHP {{ fuel_price }}/L
+                        </strong>
+
+                    </div>
+
+
+                    <div class="fuel-item highlight">
+
+                        <span>
+                            Estimated Fuel Cost
+                        </span>
+
+                        <strong>
+                            PHP {{ "%.2f"|format(route.fuel_cost) }}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="info-note">
+
+                    <strong>Important:</strong>
+
+                    This figure is an estimated fuel cost based on
+                    route distance, fuel efficiency, and fuel price.
+                    It does not represent the total transport cost,
+                    which may also include driver fees, tolls,
+                    loaders, and other expenses.
+
+                </div>
+
+            </section>
+
+            <!-- Shipment Economics -->
+<section class="card">
+
+    <div class="section-heading">
+
+        <div>
+
+            <p class="eyebrow">
+                FARM LOGISTICS
+            </p>
+
+            <h2>Shipment Cost Breakdown</h2>
+
+            <p>
+                Estimated transportation metrics based on
+                the route and shipment information provided.
+            </p>
+
+        </div>
+
+    </div>
+
+
+    <div class="fuel-grid">
+
+        <div class="fuel-item">
+
+            <span>
+                Cargo Weight
+            </span>
+
+            <strong>
+                {{ "%.2f"|format(route.cargo_weight) }}
+                tons
+            </strong>
+
+        </div>
+
+
+        <div class="fuel-item">
+
+            <span>
+                Total Trip Cost
+            </span>
+
+            <strong>
+                PHP {{ "{:,.2f}".format(route.trip_cost) }}
+            </strong>
+
+        </div>
+
+
+        <div class="fuel-item">
+
+            <span>
+                Transport Cost / Ton
+            </span>
+
+            <strong>
+                PHP {{ "{:,.2f}".format(route.cost_per_ton) }}
+            </strong>
+
+        </div>
+
+
+        <div class="fuel-item highlight">
+
+            <span>
+                Transport Cost / Kg
+            </span>
+
+            <strong>
+                PHP {{ "%.2f"|format(route.cost_per_kg) }}
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="cost-breakdown">
+
+        <div>
+
+            <span>
+                Estimated Fuel Cost
+            </span>
+
+            <strong>
+                PHP {{ "{:,.2f}".format(route.fuel_cost) }}
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                Fuel Share of Trip Cost
+            </span>
+
+            <strong>
+                {{ "%.1f"|format(route.fuel_cost_percentage) }}%
+            </strong>
+
+        </div>
+
+
+        <div>
+
+            <span>
+                Other Estimated Trip Costs
+            </span>
+
+            <strong>
+                PHP {{ "{:,.2f}".format(route.remaining_trip_cost) }}
+            </strong>
+
+        </div>
+
+    </div>
+
+
+    <div class="info-note">
+
+        <strong>Planning context:</strong>
+
+        The client documentation reports typical hired
+        six-wheeler trips of approximately ₱18,000–₱25,000,
+        including fuel, driver, toll, and loaders. This
+        application uses the trip-cost value entered by
+        the user and separately estimates fuel expenditure.
+
+    </div>
+
+</section>
+
+
+            <!-- Directions -->
+            <section class="card">
+
+                <div class="section-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            NAVIGATION
+                        </p>
+
+                        <h2>Turn-by-Turn Directions</h2>
+
+                        <p>
+                            {{ route.maneuvers|length }}
+                            navigation steps
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="directions">
+
+                    {% for maneuver in route.maneuvers %}
+
+                    <div class="direction">
+
+                        <div class="direction-number">
+                            {{ loop.index }}
+                        </div>
+
+
+                        <div class="direction-content">
+
+                            <p>
+                                {{ maneuver.narrative }}
+                            </p>
+
+                            <span>
+                                {{ "%.2f"|format(maneuver.kilometers) }}
+                                km
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </section>
+
+
+            <!-- Disclaimer -->
+            <div class="disclaimer">
+
+                <strong>Planning note:</strong>
+
+                Route and distance information is provided by
+                MapQuest. Fuel estimates are calculated by
+                FolkOps using the values entered above.
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+    </main>
+
+
+    <footer>
+
+        <div class="container">
+
+            <p>
+                FolkOps • Social Coding Project Activity 3
+            </p>
+
+        </div>
+
+    </footer>
+
+</body>
+
+</html>
